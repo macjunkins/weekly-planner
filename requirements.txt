@@ -1,0 +1,20 @@
+# GraphQL client for GitHub API
+gql[all]==3.5.0
+
+# YAML parsing for config files
+PyYAML==6.0.1
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Git repository operations
+GitPython==3.1.40
+
+# Date/time utilities
+python-dateutil==2.8.2
+
+# Rich terminal output (for pretty printing)
+rich==13.7.0
+# Weekly Planner specific dependencies
+icalendar>=5.0.0
+pytz>=2023.3
