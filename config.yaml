@@ -12,14 +12,14 @@ github:
 projects:
   # 🚨 Pillar 1: Revenue Generation (CRITICAL PATH)
   - name: EmberCare-Business
-    path: /Users/johnjunkins/GitHub/EmberCare-Business
+    path: /Users/johnjunkins/Projects/EmberCare-Business
     github_repo: macjunkins/EmberCare-Business
     pillar: revenue
     priority: critical
     description: "Backend API and business logic"
 
   - name: EmberCareFlutter
-    path: /Users/johnjunkins/GitHub/EmberCareFlutter
+    path: /Users/johnjunkins/Projects/EmberCareFlutter
     github_repo: macjunkins/EmberCareFlutter
     pillar: revenue
     priority: critical
@@ -27,35 +27,35 @@ projects:
 
   # 🚀 Pillar 2: Infrastructure & Productivity (FORCE MULTIPLIER)
   - name: rapid-mcp-server
-    path: /Users/johnjunkins/GitHub/rapid-mcp-server
+    path: /Users/johnjunkins/Projects/rapid-mcp-server
     github_repo: macjunkins/rapid-mcp-server
     pillar: infrastructure
     priority: high
     description: "MCP Server - Zig implementation"
 
   - name: rapid-mcp-server-go
-    path: /Users/johnjunkins/GitHub/rapid-mcp-server-go
+    path: /Users/johnjunkins/Projects/rapid-mcp-server-go
     github_repo: macjunkins/rapid-mcp-server-go
     pillar: infrastructure
     priority: high
     description: "MCP Server - Go implementation"
 
   - name: rapid-mcp-server-rust
-    path: /Users/johnjunkins/GitHub/rapid-mcp-server-rust
+    path: /Users/johnjunkins/Projects/rapid-mcp-server-rust
     github_repo: macjunkins/rapid-mcp-server-rust
     pillar: infrastructure
     priority: high
     description: "MCP Server - Rust implementation"
 
   - name: rapid-mcp-commands
-    path: /Users/johnjunkins/GitHub/rapid-mcp-commands
+    path: /Users/johnjunkins/Projects/rapid-mcp-commands
     github_repo: macjunkins/rapid-mcp-commands
     pillar: infrastructure
     priority: medium
     description: "Command library (25 commands)"
 
   - name: github-org-toolkit
-    path: /Users/johnjunkins/GitHub/github-org-toolkit
+    path: /Users/johnjunkins/Projects/github-org-toolkit
     github_repo: macjunkins/github-org-toolkit
     pillar: infrastructure
     priority: high
@@ -63,7 +63,7 @@ projects:
 
   # 📺 Pillar 3: Consistency & Reputation (DAILY PRACTICE)
   - name: Streaming
-    path: /Users/johnjunkins/GitHub/Streaming
+    path: /Users/johnjunkins/Projects/Streaming
     github_repo: macjunkins/Streaming
     pillar: consistency
     priority: medium
@@ -71,7 +71,7 @@ projects:
 
   # 🟡 Pillar 4: Strategic Cleanup (LOWER PRIORITY)
   - name: acreetion_os-Org
-    path: /Users/johnjunkins/GitHub/acreetion_os-Org
+    path: /Users/johnjunkins/Projects/acreetion_os-Org
     github_repo: macjunkins/acreetion_os-Org
     pillar: cleanup
     priority: low
@@ -79,7 +79,7 @@ projects:
 
   # 🔬 Pillar 5: Strategic Innovation (EXPLORATORY)
   - name: RapidOS
-    path: /Users/johnjunkins/GitHub/RapidOS
+    path: /Users/johnjunkins/Projects/RapidOS
     github_repo: macjunkins/RapidOS
     pillar: innovation
     priority: medium

@@ -89,7 +89,7 @@ weekly_planner:
 
   # Stream plan integration (NEW)
   generate_stream_plans: true                              # Auto-generate stream folders
-  streaming_repo_path: "/Users/johnjunkins/GitHub/Streaming"
+  streaming_repo_path: "/Users/johnjunkins/Projects/Streaming"
   stream_plans_output_dir: "streams"                       # Relative to streaming_repo_path
   stream_duration_hours: 4                                 # 4-hour streams (not 3)
 
@@ -98,7 +98,7 @@ weekly_planner:
   milestone_grouping_threshold: 3                          # Min hours from same milestone to group
 
   # Meta-roadmap
-  meta_roadmap_path: "/Users/johnjunkins/GitHub/meta-roadmap.md"
+  meta_roadmap_path: "/Users/johnjunkins/Projects/meta-roadmap.md"
   current_quarter: "Q1"  # Auto-detect from date
   current_year: 2026
 ```
