@@ -55,14 +55,41 @@ Development is organized into 5 milestones:
 
 **Total estimated effort:** 36-46 hours
 
-## Installation
+## Quick Start
 
-Coming soon after M5 completion.
+### 1. Install Dependencies
+
+```bash
+cd weekly-planner
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env and add: GITHUB_TOKEN=your_token_here
+```
+
+**Required token scopes:** `repo`, `read:org`, `read:user`
+
+### 3. Verify Setup
+
+Run the comprehensive test suite to ensure everything is working:
+
+```bash
+./run_tests.sh
+```
+
+You should see "ALL TESTS PASSED - Repository is ready for development!"
+
+See [TESTING.md](TESTING.md) for detailed testing documentation and individual test scripts.
+
+## Installation
 
 ### Dependencies
 
 ```bash
-cd weekly-planner
 pip install -r requirements.txt
 ```
 
@@ -80,20 +107,21 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Edit `config.yaml` to configure:
-- GitHub organizations and repositories
-- Project paths and priorities
-- Strategic pillars (revenue, infrastructure, etc.)
-- Stream schedule settings
+### config.yaml
 
-Create a `.env` file with your GitHub token:
+Edit `config.yaml` to customize your project portfolio:
 
-```bash
-cp .env.example .env
-# Edit .env and add: GITHUB_TOKEN=your_token_here
-```
+- **GitHub settings**: Organizations and user to monitor
+- **Projects**: Paths, repositories, priorities, and pillars
+- **Strategic pillars**: revenue, infrastructure, consistency, cleanup, innovation
+- **Reports**: Output directories and formatting preferences
+- **Milestones**: Quarterly goals and date ranges
 
-**Required token scopes:** `repo`, `read:org`, `read:user`
+The configuration is shared with [portfolio-manager](https://github.com/macjunkins/portfolio-manager) for consistency.
+
+### Environment Variables
+
+See Quick Start above for `.env` setup. Required token scopes: `repo`, `read:org`, `read:user`
 
 ## Usage
 
