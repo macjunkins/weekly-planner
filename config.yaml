@@ -112,3 +112,15 @@ milestones:
   q4_2026:
     start: "2026-10-01"
     end: "2026-12-31"
+
+# Weekly Planner Configuration
+weekly_planner:
+  # Time estimation
+  estimate_patterns:
+    - "(?i)estimate[d]?:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
+    - "(?i)time:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
+    - "(?i)effort:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
+    - "\\[(\\d+)h\\]"
+    - "\\[(\\d+)\\s*hours?\\]"
+  default_estimate_hours: 1
+  max_estimate_hours: 8
