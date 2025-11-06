@@ -117,7 +117,7 @@ milestones:
 weekly_planner:
   # Time estimation
   estimate_patterns:
-    - "(?i)estimate[d]?:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
+    - "(?i)estimated?:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
     - "(?i)time:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
     - "(?i)effort:\\s*(\\d+)\\s*(?:hours?|hrs?|h)"
     - "\\[(\\d+)h\\]"
