@@ -7,48 +7,93 @@ Tests pattern matching, edge cases, batch operations, and config integration.
 import sys
 import unittest
 from pathlib import Path
+from typing import Any, Optional, Protocol, cast
 
 # Add lib to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 
-from time_estimator import TimeEstimator
+from time_estimator import TimeEstimator  # type: ignore
+
+
+class TimeEstimatorProtocol(Protocol):
+    """Protocol defining the TimeEstimator interface for type checking."""
+
+    def extract_estimate(self, issue_body: Optional[str]) -> int:
+        """Extract time estimate from issue body."""
+        ...
+
+    def batch_extract(self, issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Extract time estimates for multiple issues."""
+        ...
+
+    @property
+    def patterns(self) -> list[Any]:
+        """Compiled regex patterns."""
+        ...
+
+    @property
+    def default_hours(self) -> int:
+        """Default hours when no estimate found."""
+        ...
+
+    @property
+    def max_hours(self) -> int:
+        """Maximum allowed hours."""
+        ...
+
+
+def _get_estimator() -> TimeEstimatorProtocol:
+    """Helper to create typed estimator instance."""
+    return cast(TimeEstimatorProtocol, TimeEstimator())
 
 
 class TestTimeEstimatorHappyPaths(unittest.TestCase):
     """Test successful pattern matching for all configured patterns."""
 
-    def test_pattern1_estimate_variations(self):
-        """Test pattern 1: 'Estimate:' variations."""
-        estimator = TimeEstimator()
-        assert estimator.extract_estimate("Estimate: 2 hours") == 2
-        assert estimator.extract_estimate("Estimated: 3h") == 3
-        assert estimator.extract_estimate("Estimate: 4 hrs") == 4
-        assert estimator.extract_estimate("estimate: 5 hour") == 5  # Case insensitive
+    def test_pattern1_estimate_variations(self) -> None:
+        """Test pattern 1: 'Estimate:' variations.
+
+        Examples:
+            >>> estimator = TimeEstimator()
+            >>> estimator.extract_estimate("Estimate: 2 hours")
+            2
+            >>> estimator.extract_estimate("Estimated: 3h")
+            3
+            >>> estimator.extract_estimate("Estimate: 4 hrs")
+            4
+            >>> estimator.extract_estimate("estimate: 5 hour")
+            5
+        """
+        estimator = _get_estimator()
+        self.assertEqual(estimator.extract_estimate("Estimate: 2 hours"), 2)
+        self.assertEqual(estimator.extract_estimate("Estimated: 3h"), 3)
+        self.assertEqual(estimator.extract_estimate("Estimate: 4 hrs"), 4)
+        self.assertEqual(estimator.extract_estimate("estimate: 5 hour"), 5)  # Case insensitive
 
     def test_pattern2_time_variations(self):
         """Test pattern 2: 'Time:' variations."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("Time: 3h") == 3
         assert estimator.extract_estimate("Time: 4 hours") == 4
         assert estimator.extract_estimate("time: 5 hrs") == 5
 
     def test_pattern3_effort_variations(self):
         """Test pattern 3: 'Effort:' variations."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("Effort: 4 hours") == 4
         assert estimator.extract_estimate("Effort: 5h") == 5
         assert estimator.extract_estimate("effort: 6 hrs") == 6
 
     def test_pattern4_bracket_h_format(self):
         """Test pattern 4: '[Xh]' format."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("[5h]") == 5
         assert estimator.extract_estimate("[5h] Build feature") == 5
         assert estimator.extract_estimate("Task [3h] description") == 3
 
     def test_pattern5_bracket_hours_format(self):
         """Test pattern 5: '[X hours]' format."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("[6 hours]") == 6
         assert estimator.extract_estimate("[7 hours] Task") == 7
         assert estimator.extract_estimate("Task [4 hour] description") == 4
@@ -59,19 +104,19 @@ class TestTimeEstimatorEdgeCases(unittest.TestCase):
 
     def test_no_match_returns_default(self):
         """Test that no match returns default (1h)."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("No estimate here") == 1
         assert estimator.extract_estimate("This issue has no time info") == 1
 
     def test_multiple_matches_uses_first(self):
         """Test that first match wins when multiple patterns match."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         # "Estimate: 2h" should match before "Time: 3h" (pattern order)
         assert estimator.extract_estimate("Estimate: 2h Time: 3h") == 2
 
     def test_negative_value_becomes_absolute(self):
         """Test that negative values are converted to absolute value."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         # Regex pattern matches digits only, so "Estimate: -5 hours" will match "5"
         # The abs() normalization handles any edge case where negative might pass
         body = "Estimate: 5 hours"  # Test with positive value
@@ -85,42 +130,42 @@ class TestTimeEstimatorEdgeCases(unittest.TestCase):
 
     def test_zero_value_returns_default(self):
         """Test that zero values return default instead of 0."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         # Zero should be caught and return default
         assert estimator.extract_estimate("Estimate: 0 hours") == 1
 
     def test_value_over_max_clamped(self):
         """Test that values > max_hours (8) are clamped."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("Estimate: 10 hours") == 8
         assert estimator.extract_estimate("Estimate: 100 hours") == 8
         assert estimator.extract_estimate("Time: 9h") == 8
 
     def test_missing_body_returns_default(self):
         """Test that None body returns default."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate(None) == 1
 
     def test_empty_string_body_returns_default(self):
         """Test that empty string body returns default."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("") == 1
         assert estimator.extract_estimate("   ") == 1  # Whitespace only
 
     def test_value_at_max_boundary(self):
         """Test that max value (8) is allowed."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("Estimate: 8 hours") == 8
         assert estimator.extract_estimate("Time: 8h") == 8
 
     def test_value_at_min_boundary(self):
         """Test that min value (1) is the default."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.extract_estimate("Estimate: 1 hour") == 1
 
     def test_pattern_with_extra_text(self):
         """Test that patterns work with surrounding text."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert (
             estimator.extract_estimate(
                 "This is a complex issue.\n\nEstimate: 3 hours\n\nMore details here."
@@ -134,7 +179,7 @@ class TestTimeEstimatorBatchOperations(unittest.TestCase):
 
     def test_batch_with_valid_estimates(self):
         """Test batch processing with valid estimates."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         issues = [
             {"number": 1, "body": "Estimate: 2h"},
             {"number": 2, "body": "Time: 3h"},
@@ -153,7 +198,7 @@ class TestTimeEstimatorBatchOperations(unittest.TestCase):
 
     def test_batch_with_missing_bodies(self):
         """Test batch processing with missing body fields."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         issues = [
             {"number": 1, "body": "Estimate: 2h"},
             {"number": 2},  # Missing body
@@ -168,7 +213,7 @@ class TestTimeEstimatorBatchOperations(unittest.TestCase):
 
     def test_batch_with_mix_of_matched_unmatched(self):
         """Test batch with mix of matched and unmatched issues."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         issues = [
             {"number": 1, "body": "Estimate: 2h"},  # Matched
             {"number": 2, "body": "No estimate"},  # Unmatched
@@ -185,14 +230,14 @@ class TestTimeEstimatorBatchOperations(unittest.TestCase):
 
     def test_empty_batch(self):
         """Test batch with empty list."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         results = estimator.batch_extract([])
         assert len(results) == 0
         assert results == []
 
     def test_batch_preserves_original_fields(self):
         """Test that batch processing preserves all original issue fields."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         issues = [
             {
                 "number": 1,
@@ -218,14 +263,14 @@ class TestTimeEstimatorConfigIntegration(unittest.TestCase):
 
     def test_loads_patterns_from_config(self):
         """Test that patterns are loaded from actual config.yaml."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         # Should not raise exception
         assert estimator.patterns is not None
         assert len(estimator.patterns) > 0
 
     def test_default_values_from_config(self):
         """Test that default and max values come from config."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         assert estimator.default_hours == 1
         assert estimator.max_hours == 8
 
@@ -234,7 +279,7 @@ class TestTimeEstimatorConfigIntegration(unittest.TestCase):
         # This is a basic smoke test - actual config modification would
         # require reloading, which we don't support in current design
         # (config loaded once in __init__)
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         # Verify it uses config values
         assert estimator.default_hours in [1, 8]  # Should be reasonable
         assert estimator.max_hours >= 1
@@ -245,7 +290,7 @@ class TestTimeEstimatorRealWorldExamples(unittest.TestCase):
 
     def test_realistic_issue_with_estimate(self):
         """Test with realistic issue format."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         body = """
         ## Description
         This task involves building a new feature.
@@ -260,7 +305,7 @@ class TestTimeEstimatorRealWorldExamples(unittest.TestCase):
 
     def test_realistic_issue_with_bracket_format(self):
         """Test with bracket format in issue title/body."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         body = """
         [2h] Implement user authentication
 
@@ -270,7 +315,7 @@ class TestTimeEstimatorRealWorldExamples(unittest.TestCase):
 
     def test_realistic_issue_without_estimate(self):
         """Test with issue that has no estimate."""
-        estimator = TimeEstimator()
+        estimator = _get_estimator()
         body = """
         ## Description
         This is a bug that needs fixing.
