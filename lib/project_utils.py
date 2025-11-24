@@ -23,20 +23,14 @@ def load_config(config_path: str | Path) -> dict[str, Any]:
         Parsed configuration as a dictionary.
 
     Raises:
-        FileNotFoundError: If the provided path does not exist.
-        yaml.YAMLError: If the file cannot be parsed as valid YAML.
-
-    Examples:
-        >>> config = load_config("config.yaml")
-        >>> isinstance(config, dict)
-        True
+        FileNotFoundError: If ``path`` does not exist.
+        yaml.YAMLError: If YAML cannot be parsed.
     """
+    config_path = Path(path)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    path = Path(config_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Config file not found: {path}")
-
-    with path.open("r", encoding="utf-8") as handle:
+    with config_path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
 
 
