@@ -1,8 +1,10 @@
-"""Utility helpers for weekly-planner.
+"""Common project utilities for configuration and formatting.
 
-Provides configuration loading and priority formatting helpers shared across
-scripts and tests.
+This module is a lightweight replacement for the shared utilities used by
+`weekly-planner` and related tools. It focuses on configuration loading and
+priority formatting needed by the current test suite.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,11 +13,11 @@ from typing import Any
 import yaml
 
 
-def load_config(path: str | Path) -> dict[str, Any]:
-    """Load YAML configuration from ``path``.
+def load_config(config_path: str | Path) -> dict[str, Any]:
+    """Load a YAML configuration file.
 
     Args:
-        path: Location of the YAML configuration file.
+        config_path: Path to the YAML configuration file.
 
     Returns:
         Parsed configuration as a dictionary.
@@ -33,20 +35,28 @@ def load_config(path: str | Path) -> dict[str, Any]:
 
 
 def get_priority_emoji(priority: str) -> str:
-    """Return an emoji representing the given priority level.
+    """Return an emoji representing the provided priority level.
 
     Args:
-        priority: Priority label (e.g., ``critical``, ``high``, ``medium``).
+        priority: Priority string such as "critical", "high", "medium", or
+            "low".
 
     Returns:
-        Emoji string to visually represent the priority. Defaults to a pin for
-        unknown priorities.
+        An emoji indicating urgency. Defaults to a bullet if the priority is
+        unrecognized.
+
+    Examples:
+        >>> get_priority_emoji("critical")
+        '🔥'
+        >>> get_priority_emoji("medium")
+        '➡️'
     """
-    normalized = priority.lower()
+
+    normalized = priority.strip().lower()
     mapping = {
         "critical": "🔥",
-        "high": "⚡",
-        "medium": "📌",
-        "low": "🟢",
+        "high": "⬆️",
+        "medium": "➡️",
+        "low": "⬇️",
     }
-    return mapping.get(normalized, "📌")
+    return mapping.get(normalized, "•")
