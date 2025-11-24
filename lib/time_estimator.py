@@ -62,7 +62,7 @@ class TimeEstimator:
             issue_body: Issue description text or ``None``.
 
         Returns:
-            Parsed hours clamped between ``default_hours`` and ``max_hours``.
+            Parsed hours clamped to a maximum of ``max_hours``, or ``default_hours`` if no estimate is found or hours is 0.
         """
         if not issue_body or not issue_body.strip():
             return self.default_hours
