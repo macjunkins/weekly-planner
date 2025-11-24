@@ -141,7 +141,7 @@ def main():
                 console.print("[yellow]⚠ lib/:[/yellow] Directory exists but no Python files found")
     else:
         console.print("[red]✗ lib/:[/red] Not found")
-        console.print("  [dim]Create with:[/dim] ln -s ../portfolio-manager/lib lib")
+        console.print("  [dim]Please create the lib/ directory and ensure it contains the required Python modules. See setup documentation for details.[/dim]")
 
     # Summary
     console.print("\n[bold yellow]4. Overall Status[/bold yellow]")
