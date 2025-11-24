@@ -284,6 +284,35 @@ class TestTimeEstimatorConfigIntegration(unittest.TestCase):
         assert estimator.default_hours in [1, 8]  # Should be reasonable
         assert estimator.max_hours >= 1
 
+    def test_invalid_config_raises_error(self):
+        """Test that invalid config (default > max) raises ValueError."""
+        import tempfile
+        import yaml
+
+        # Create a temporary config with default_hours > max_hours
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            config = {
+                'weekly_planner': {
+                    'default_estimate_hours': 10,
+                    'max_estimate_hours': 5
+                }
+            }
+            yaml.dump(config, f)
+            temp_config_path = f.name
+
+        try:
+            # Should raise ValueError
+            with self.assertRaises(ValueError) as context:
+                TimeEstimator(config_path=temp_config_path)
+            
+            # Verify the error message is informative
+            assert "default_estimate_hours" in str(context.exception)
+            assert "max_estimate_hours" in str(context.exception)
+        finally:
+            # Clean up temp file
+            import os
+            os.unlink(temp_config_path)
+
 
 class TestTimeEstimatorRealWorldExamples(unittest.TestCase):
     """Test with realistic GitHub issue examples."""
