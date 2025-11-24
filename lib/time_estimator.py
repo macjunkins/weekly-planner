@@ -42,6 +42,13 @@ class TimeEstimator:
         self.default_hours = int(config.get("weekly_planner", {}).get("default_estimate_hours", DEFAULT_ESTIMATE_HOURS))
         self.max_hours = int(config.get("weekly_planner", {}).get("max_estimate_hours", DEFAULT_MAX_HOURS))
 
+        # Validate configuration: default_hours must not exceed max_hours
+        if self.default_hours > self.max_hours:
+            raise ValueError(
+                f"Configuration error: default_estimate_hours ({self.default_hours}) "
+                f"must not exceed max_estimate_hours ({self.max_hours})"
+            )
+
     def _load_config(self) -> dict[str, Any]:
         """Load configuration safely with sensible fallbacks."""
 
