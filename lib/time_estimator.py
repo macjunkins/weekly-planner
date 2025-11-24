@@ -1,89 +1,79 @@
 """Time estimation utilities for GitHub issues.
 
-The :class:`TimeEstimator` reads estimation patterns from ``config.yaml``
-so that tests and future CLI commands can consistently parse issue
-bodies. Estimates default to a minimum value and are clamped to a
-configurable maximum to avoid unrealistic schedules.
+The :class:`TimeEstimator` reads configured regex patterns from ``config.yaml``
+and extracts estimated hours from issue bodies. When no valid estimate is
+found, it falls back to the configured default. Values are clamped to the
+configured maximum to avoid unrealistic schedules.
+
+Example:
+    >>> estimator = TimeEstimator()
+    >>> estimator.extract_estimate("Estimate: 3 hours")
+    3
+    >>> estimator.batch_extract([
+    ...     {"number": 1, "body": "Estimate: 2h"},
+    ...     {"number": 2, "body": "No estimate"},
+    ... ])
+    [{'number': 1, 'body': 'Estimate: 2h', 'estimated_hours': 2},
+     {'number': 2, 'body': 'No estimate', 'estimated_hours': 1}]
 """
 from __future__ import annotations
 
-from pathlib import Path
 import re
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any
 
 from project_utils import load_config
 
-# Default patterns mirror the ones defined in config.yaml so the class
-# remains functional even if configuration cannot be loaded.
-DEFAULT_PATTERNS: list[str] = [
-    r"(?i)estimated?:\s*(\d+)\s*(?:hours?|hrs?|h)",
-    r"(?i)time:\s*(\d+)\s*(?:hours?|hrs?|h)",
-    r"(?i)effort:\s*(\d+)\s*(?:hours?|hrs?|h)",
-    r"\[(\d+)h\]",
-    r"\[(\d+)\s*hours?\]",
-]
-DEFAULT_ESTIMATE_HOURS = 1
-DEFAULT_MAX_HOURS = 8
-
 
 class TimeEstimator:
-    """Extract time estimates from GitHub issue bodies.
+    """Parse and normalize time estimates from issue bodies.
 
-    Patterns and defaults are configured via the ``weekly_planner``
-    section of ``config.yaml``.
+    Patterns, defaults, and maximums are loaded from ``config.yaml`` under the
+    ``weekly_planner`` key. The patterns are compiled once during
+    initialization for efficient reuse.
     """
 
-    def __init__(self, config_path: Optional[str | Path] = None) -> None:
-        self.config_path = Path(config_path) if config_path else Path(__file__).parent.parent / "config.yaml"
-        config = self._load_config()
+    def __init__(self) -> None:
+        config_path = Path(__file__).parent.parent / "config.yaml"
+        config = load_config(config_path)
+        planner_config = config.get("weekly_planner", {})
 
-        patterns = config.get("weekly_planner", {}).get("estimate_patterns", DEFAULT_PATTERNS)
-        self.patterns = [re.compile(pattern) for pattern in patterns]
-        self.default_hours = int(config.get("weekly_planner", {}).get("default_estimate_hours", DEFAULT_ESTIMATE_HOURS))
-        self.max_hours = int(config.get("weekly_planner", {}).get("max_estimate_hours", DEFAULT_MAX_HOURS))
+        pattern_strings = planner_config.get("estimate_patterns", [])
+        self.patterns = [re.compile(pattern) for pattern in pattern_strings]
+        self.default_hours = int(planner_config.get("default_estimate_hours", 1))
+        self.max_hours = int(planner_config.get("max_estimate_hours", 8))
 
-        # Validate configuration: default_hours must not exceed max_hours
-        if self.default_hours > self.max_hours:
-            raise ValueError(
-                f"Configuration error: default_estimate_hours ({self.default_hours}) "
-                f"must not exceed max_estimate_hours ({self.max_hours})"
-            )
-
-    def _load_config(self) -> dict[str, Any]:
-        """Load configuration safely with sensible fallbacks."""
-
-        try:
-            return load_config(self.config_path)
-        except FileNotFoundError:
-            return {"weekly_planner": {}}
-
-    def extract_estimate(self, issue_body: Optional[str]) -> int:
-        """Extract a time estimate from an issue body.
+    def extract_estimate(self, issue_body: str | None) -> int:
+        """Extract an hour estimate from an issue body.
 
         Args:
-            issue_body: Raw issue description or ``None``.
+            issue_body: The text content of the issue body.
 
         Returns:
-            Estimated hours between ``default_hours`` and ``max_hours``.
+            Normalized hour estimate. Falls back to the configured default when
+            no pattern matches or when invalid values are encountered.
         """
-
-        if not issue_body or not issue_body.strip():
+        if issue_body is None:
             return self.default_hours
 
-        normalized_body = issue_body.strip()
+        text = issue_body.strip()
+        if not text:
+            return self.default_hours
 
         for pattern in self.patterns:
-            match = pattern.search(normalized_body)
-            if match:
-                try:
-                    hours = abs(int(match.group(1)))
-                except (TypeError, ValueError):
-                    continue
+            match = pattern.search(text)
+            if not match:
+                continue
 
-                if hours == 0:
-                    return self.default_hours
+            value = int(match.group(1))
+            normalized = abs(value)
+            if normalized == 0:
+                return self.default_hours
 
-                return min(max(hours, self.default_hours), self.max_hours)
+            if normalized > self.max_hours:
+                return self.max_hours
+
+            return normalized
 
         return self.default_hours
 
