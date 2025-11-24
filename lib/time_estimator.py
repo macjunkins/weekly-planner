@@ -107,11 +107,12 @@ class TimeEstimator:
 
         results: list[dict[str, Any]] = []
         for issue in issues:
-            body = issue.get("body") if isinstance(issue, dict) else None
+            if not isinstance(issue, dict):
+                continue  # Skip non-dict items to avoid TypeError
+            body = issue.get("body")
             estimate = self.extract_estimate(body if isinstance(body, str) else None)
             enriched = {**issue, "estimated_hours": estimate}
             results.append(enriched)
-
         return results
 
     def _load_config(self) -> TimeEstimatorConfig:
