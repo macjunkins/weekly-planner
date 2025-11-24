@@ -90,7 +90,9 @@ class TimeEstimator:
         """
         results: list[dict[str, Any]] = []
         for issue in issues:
-            body = issue.get("body") if isinstance(issue, dict) else None
+            if not isinstance(issue, dict):
+                continue  # Skip non-dict items
+            body = issue.get("body")
             estimate = self.extract_estimate(body)
             enriched_issue = dict(issue)
             enriched_issue["estimated_hours"] = estimate
