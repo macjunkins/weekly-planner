@@ -72,15 +72,12 @@ def check_lib_directory():
     if not lib_dir.exists():
         return {'exists': False}
 
-    if not lib_dir.is_symlink():
-        return {'exists': True, 'is_symlink': False}
-
     target = lib_dir.resolve()
     files = list(lib_dir.glob('*.py'))
 
     return {
         'exists': True,
-        'is_symlink': True,
+        'is_symlink': lib_dir.is_symlink(),
         'target': str(target),
         'accessible': len(files) > 0,
         'files': [f.name for f in files]
@@ -132,18 +129,19 @@ def main():
     lib_result = check_lib_directory()
 
     if lib_result['exists']:
-        if lib_result.get('is_symlink'):
-            if lib_result.get('accessible'):
-                console.print(f"[green]✓ lib/:[/green] Symlink working")
-                console.print(f"  [dim]Target:[/dim] {lib_result['target']}")
-                console.print(f"  [dim]Files:[/dim] {', '.join(lib_result['files'])}")
-            else:
-                console.print("[yellow]⚠ lib/:[/yellow] Symlink exists but target not accessible")
+        if lib_result.get('accessible'):
+            console.print(f"[green]✓ lib/:[/green] Library available")
+            if lib_result.get('is_symlink'):
+                console.print(f"  [dim]Symlink Target:[/dim] {lib_result['target']}")
+            console.print(f"  [dim]Files:[/dim] {', '.join(lib_result['files'])}")
         else:
-            console.print("[yellow]⚠ lib/:[/yellow] Directory exists but not a symlink")
+            if lib_result.get('is_symlink'):
+                console.print("[yellow]⚠ lib/:[/yellow] Symlink exists but target not accessible")
+            else:
+                console.print("[yellow]⚠ lib/:[/yellow] Directory exists but no Python files found")
     else:
         console.print("[red]✗ lib/:[/red] Not found")
-        console.print("  [dim]Create with:[/dim] ln -s ../portfolio-manager/lib lib")
+        console.print("  [dim]Please create the lib/ directory and ensure it contains the required Python modules. See setup documentation for details.[/dim]")
 
     # Summary
     console.print("\n[bold yellow]4. Overall Status[/bold yellow]")

@@ -4,10 +4,14 @@ Unit tests for TimeEstimator class.
 Tests pattern matching, edge cases, batch operations, and config integration.
 """
 
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Any, Optional, Protocol, cast
+
+import yaml
 
 # Add lib to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
@@ -283,6 +287,31 @@ class TestTimeEstimatorConfigIntegration(unittest.TestCase):
         # Verify it uses config values
         assert estimator.default_hours in [1, 8]  # Should be reasonable
         assert estimator.max_hours >= 1
+
+    def test_invalid_config_raises_error(self):
+        """Test that invalid config (default > max) raises ValueError."""
+        # Create a temporary config with default_hours > max_hours
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            config = {
+                'weekly_planner': {
+                    'default_estimate_hours': 10,
+                    'max_estimate_hours': 5
+                }
+            }
+            yaml.dump(config, f)
+            temp_config_path = f.name
+
+        try:
+            # Should raise ValueError
+            with self.assertRaises(ValueError) as context:
+                TimeEstimator(config_path=temp_config_path)
+            
+            # Verify the error message is informative
+            self.assertIn("default_estimate_hours", str(context.exception))
+            self.assertIn("max_estimate_hours", str(context.exception))
+        finally:
+            # Clean up temp file
+            Path(temp_config_path).unlink()
 
 
 class TestTimeEstimatorRealWorldExamples(unittest.TestCase):

@@ -78,23 +78,22 @@ class TimeEstimator:
         return self.default_hours
 
     def batch_extract(self, issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract estimates for a batch of issues.
+        """Extract time estimates for a batch of issues.
 
         Args:
-            issues: List of issue dictionaries containing at least a ``body``
-                field.
+            issues: List of issue dictionaries containing a ``body`` field.
 
         Returns:
-            New list of issue dictionaries with an added ``estimated_hours``
-            field while preserving the original data.
+            New list of dictionaries, preserving the original fields and
+            adding ``estimated_hours`` for each issue.
         """
+
         results: list[dict[str, Any]] = []
         for issue in issues:
-            if not isinstance(issue, dict):
-                continue  # Skip non-dict items
-            body = issue.get("body")
-            estimate = self.extract_estimate(body)
-            enriched_issue = dict(issue)
-            enriched_issue["estimated_hours"] = estimate
-            results.append(enriched_issue)
+            issue_copy = issue.copy()
+            issue_copy["estimated_hours"] = self.extract_estimate(issue.get("body"))
+            results.append(issue_copy)
         return results
+
+
+__all__ = ["TimeEstimator"]
