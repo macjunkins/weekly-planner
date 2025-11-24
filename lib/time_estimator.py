@@ -45,7 +45,7 @@ class TimeEstimator:
         weekly_config = config.get("weekly_planner", {})
 
         self._pattern_strings: list[str] = list(weekly_config.get("estimate_patterns", []))
-        self._patterns = [re.compile(pattern) for pattern in self._pattern_strings]
+        self._patterns: list[re.Pattern[str]] = [re.compile(pattern) for pattern in self._pattern_strings]
         self._default_hours = int(weekly_config.get("default_estimate_hours", 1))
         self._max_hours = int(weekly_config.get("max_estimate_hours", 8))
 
