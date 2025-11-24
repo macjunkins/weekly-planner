@@ -50,7 +50,7 @@ class TimeEstimator:
         self._max_hours = int(weekly_config.get("max_estimate_hours", 8))
 
     @property
-    def patterns(self) -> list[Any]:
+    def patterns(self) -> list[re.Pattern[str]]:
         """Return compiled regex patterns."""
 
         return self._patterns
