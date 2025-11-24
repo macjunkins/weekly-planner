@@ -1,123 +1,100 @@
 """Time estimation utilities for GitHub issues.
 
-This module parses time estimates from issue descriptions using
-configurable regex patterns defined in ``config.yaml``.
-"""
+The :class:`TimeEstimator` reads configured regex patterns from ``config.yaml``
+and extracts estimated hours from issue bodies. When no valid estimate is
+found, it falls back to the configured default. Values are clamped to the
+configured maximum to avoid unrealistic schedules.
 
+Example:
+    >>> estimator = TimeEstimator()
+    >>> estimator.extract_estimate("Estimate: 3 hours")
+    3
+    >>> estimator.batch_extract([
+    ...     {"number": 1, "body": "Estimate: 2h"},
+    ...     {"number": 2, "body": "No estimate"},
+    ... ])
+    [{'number': 1, 'body': 'Estimate: 2h', 'estimated_hours': 2},
+     {'number': 2, 'body': 'No estimate', 'estimated_hours': 1}]
+"""
 from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any
 
-import yaml
+from project_utils import load_config
 
 
 class TimeEstimator:
-    """Parse time estimates from GitHub issue bodies.
+    """Parse and normalize time estimates from issue bodies.
 
-    Examples:
-        >>> estimator = TimeEstimator()
-        >>> estimator.extract_estimate("Estimate: 2 hours")
-        2
-        >>> estimator.extract_estimate("[4h] Implement feature")
-        4
-        >>> estimator.extract_estimate("No estimate provided")
-        1
+    Patterns, defaults, and maximums are loaded from ``config.yaml`` under the
+    ``weekly_planner`` key. The patterns are compiled once during
+    initialization for efficient reuse.
     """
 
-    def __init__(self, config_path: Optional[Path | str] = None) -> None:
-        """Initialize the estimator and compile patterns.
+    def __init__(self) -> None:
+        config_path = Path(__file__).parent.parent / "config.yaml"
+        config = load_config(config_path)
+        planner_config = config.get("weekly_planner", {})
 
-        Args:
-            config_path: Optional path to a YAML config file. Defaults to
-                ``config.yaml`` at the repository root.
-        """
-        config_file = Path(config_path) if config_path else Path(__file__).resolve().parent.parent / "config.yaml"
-        config = self._load_config(config_file)
-
-        self.default_hours: int = int(config.get("default_estimate_hours", 1))
-        self.max_hours: int = int(config.get("max_estimate_hours", 8))
-        pattern_strings: Iterable[str] = config.get("estimate_patterns", [])
+        pattern_strings = planner_config.get("estimate_patterns", [])
         self.patterns = [re.compile(pattern) for pattern in pattern_strings]
+        self.default_hours = int(planner_config.get("default_estimate_hours", 1))
+        self.max_hours = int(planner_config.get("max_estimate_hours", 8))
 
-    @staticmethod
-    def _load_config(config_path: Path) -> dict[str, Any]:
-        """Load time estimation configuration from YAML.
-
-        Args:
-            config_path: Path to the configuration file.
-
-        Returns:
-            Dictionary containing the weekly planner configuration block.
-        """
-        with config_path.open("r", encoding="utf-8") as handle:
-            config = yaml.safe_load(handle)
-        return config.get("weekly_planner", {}) if isinstance(config, dict) else {}
-
-    def extract_estimate(self, issue_body: Optional[str]) -> int:
-        """Extract a time estimate from an issue description.
+    def extract_estimate(self, issue_body: str | None) -> int:
+        """Extract an hour estimate from an issue body.
 
         Args:
-            issue_body: Issue description text or ``None``.
+            issue_body: The text content of the issue body.
 
         Returns:
-            Parsed hours clamped to a maximum of ``max_hours``, or ``default_hours`` if no estimate is found or hours is 0.
+            Normalized hour estimate. Falls back to the configured default when
+            no pattern matches or when invalid values are encountered.
         """
-        if not issue_body or not issue_body.strip():
+        if issue_body is None:
+            return self.default_hours
+
+        text = issue_body.strip()
+        if not text:
             return self.default_hours
 
         for pattern in self.patterns:
-            match = pattern.search(issue_body)
+            match = pattern.search(text)
             if not match:
                 continue
 
-            hours = self._normalize_hours(match.group(1))
-            if hours is not None:
-                return hours
+            value = int(match.group(1))
+            normalized = abs(value)
+            if normalized == 0:
+                return self.default_hours
+
+            if normalized > self.max_hours:
+                return self.max_hours
+
+            return normalized
 
         return self.default_hours
 
     def batch_extract(self, issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract estimates for multiple issues.
+        """Extract estimates for a batch of issues.
 
         Args:
-            issues: List of issue dictionaries containing at least a
-                ``body`` field.
+            issues: List of issue dictionaries containing at least a ``body``
+                field.
 
         Returns:
-            New list of issue dictionaries augmented with ``estimated_hours``.
+            New list of issue dictionaries with an added ``estimated_hours``
+            field while preserving the original data.
         """
         results: list[dict[str, Any]] = []
         for issue in issues:
             if not isinstance(issue, dict):
                 continue  # Skip non-dict items
             body = issue.get("body")
-            estimated_hours = self.extract_estimate(body if body is None or isinstance(body, str) else str(body))
-
-            updated_issue = dict(issue)
-            updated_issue["estimated_hours"] = estimated_hours
-            results.append(updated_issue)
+            estimate = self.extract_estimate(body)
+            enriched_issue = dict(issue)
+            enriched_issue["estimated_hours"] = estimate
+            results.append(enriched_issue)
         return results
-
-    def _normalize_hours(self, value: str) -> Optional[int]:
-        """Normalize matched hour string into a bounded integer.
-
-        Args:
-            value: Captured numeric value from regex.
-
-        Returns:
-            Normalized integer within allowed bounds, or ``None`` if invalid.
-        """
-        try:
-            hours = abs(int(value))
-        except (TypeError, ValueError):
-            return None
-
-        if hours == 0:
-            return self.default_hours
-
-        return min(hours, self.max_hours)
-
-
-__all__ = ["TimeEstimator"]
