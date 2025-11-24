@@ -94,7 +94,7 @@ class TimeEstimator:
             raw_value = match.group(1)
             hours = abs(int(raw_value))
 
-            if hours <= 0:
+            if hours == 0:
                 return self._default_hours
 
             return min(hours, self._max_hours)
