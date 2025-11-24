@@ -1,9 +1,8 @@
-"""Shared utilities for configuration and priority formatting.
+"""Common project utilities for configuration and formatting.
 
-This module provides lightweight helpers that were originally shared with
-``portfolio-manager``. Functions are intentionally minimal to keep the
-weekly-planner self contained while matching the expectations of existing
-tests and documentation.
+This module is a lightweight replacement for the shared utilities used by
+`weekly-planner` and related tools. It focuses on configuration loading and
+priority formatting needed by the current test suite.
 """
 
 from __future__ import annotations
@@ -14,47 +13,50 @@ from typing import Any
 import yaml
 
 
-# Priority to emoji mapping used throughout reporting utilities.
-_PRIORITY_EMOJIS: dict[str, str] = {
-    "critical": "🚨",
-    "high": "⚡",
-    "medium": "📈",
-    "low": "🟡",
-}
-
-
-def load_config(path: str | Path) -> dict[str, Any]:
-    """Load the YAML configuration file.
+def load_config(config_path: str | Path) -> dict[str, Any]:
+    """Load a YAML configuration file.
 
     Args:
-        path: Path to the YAML configuration file.
+        config_path: Path to the YAML configuration file.
 
     Returns:
         Parsed configuration as a dictionary.
 
     Raises:
-        FileNotFoundError: If the file does not exist.
-        yaml.YAMLError: If the YAML content is invalid.
+        FileNotFoundError: If ``path`` does not exist.
+        yaml.YAMLError: If YAML cannot be parsed.
     """
-
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as config_file:
-        return yaml.safe_load(config_file) or {}
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+
+    with config_path.open("r", encoding="utf-8") as handle:
+        return yaml.safe_load(handle) or {}
 
 
-def get_priority_emoji(priority: str | None) -> str:
-    """Return an emoji representing the given priority level.
-
-    Unknown priorities return a question mark to make the status explicit.
+def get_priority_emoji(priority: str) -> str:
+    """Return an emoji representing the provided priority level.
 
     Args:
-        priority: Priority string such as ``"critical"`` or ``"high"``.
+        priority: Priority string such as "critical", "high", "medium", or
+            "low".
 
     Returns:
-        Emoji for the priority if known, otherwise ``"❓"``.
+        An emoji indicating urgency. Defaults to a bullet if the priority is
+        unrecognized.
+
+    Examples:
+        >>> get_priority_emoji("critical")
+        '🔥'
+        >>> get_priority_emoji("medium")
+        '➡️'
     """
 
-    if priority is None:
-        return "❓"
-
-    return _PRIORITY_EMOJIS.get(priority.lower(), "❓")
+    normalized = priority.strip().lower()
+    mapping = {
+        "critical": "🔥",
+        "high": "⬆️",
+        "medium": "➡️",
+        "low": "⬇️",
+    }
+    return mapping.get(normalized, "•")
