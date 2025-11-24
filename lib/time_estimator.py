@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from project_utils import load_config
+from .project_utils import load_config
 
 
 @dataclass
